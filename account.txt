@@ -1,1 +1,0 @@
-{"nickname": "Jolly sdf", "account_hash": "b6ab3452-e8f8-11ed-ad76-0242ac110002"}

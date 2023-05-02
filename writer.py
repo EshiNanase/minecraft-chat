@@ -9,7 +9,7 @@ async def write_down_account_info(account_info):
         await file.write(account_info)
 
 
-async def dialogue(reader, writer, debug):
+async def write_in_dialogue(reader, writer, debug):
 
     while True:
         message = input('Ваше сообщение: ').replace('\n', '')
@@ -72,7 +72,7 @@ async def main(args):
     else:
         await register(reader, writer, debug)
 
-    await dialogue(reader, writer, debug)
+    await write_in_dialogue(reader, writer, debug)
 
 if __name__ == '__main__':
 

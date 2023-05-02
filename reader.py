@@ -4,13 +4,8 @@ from datetime import datetime
 import argparse
 
 
-async def main(args):
+async def read_dialogue(reader, writer, history):
 
-    host = args.host
-    port = args.port
-    history = args.history
-
-    reader, writer = await asyncio.open_connection(host=host, port=port)
     if history:
         async with aiofiles.open(args.history, 'a', encoding='utf-8') as file:
             await file.write(f'[{datetime.now().strftime("%d.%m.%y %H:%M")}] Установлено соединение\n')
@@ -25,6 +20,16 @@ async def main(args):
     except UnicodeDecodeError:
         writer.close()
         await writer.wait_closed()
+
+
+async def main(args):
+
+    host = args.host
+    port = args.port
+    history = args.history
+
+    reader, writer =  await asyncio.open_connection(host=host, port=port)
+    await read_dialogue(reader, writer, history)
 
 if __name__ == '__main__':
 
