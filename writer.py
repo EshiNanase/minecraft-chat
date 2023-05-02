@@ -1,5 +1,4 @@
 import asyncio
-import aioconsole
 import argparse
 
 
@@ -18,13 +17,11 @@ async def main(args):
     await writer.drain()
     await reader.readline()
 
-    while not reader.at_eof():
-        message = input('Ваше сообщение:')
+    while True:
+        message = input('Ваше сообщение: ')
         writer.write(f'{message}\n'.encode())
         await writer.drain()
         await reader.readline()
-    writer.close()
-    await writer.wait_closed()
 
 if __name__ == '__main__':
 

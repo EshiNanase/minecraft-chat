@@ -16,8 +16,9 @@ async def main(args):
             await file.write(f'[{datetime.now().strftime("%d.%m.%y %H:%M")}] Установлено соединение\n')
     try:
         while True:
-            data = await reader.read(256)
-            print(data.decode())
+            data = await reader.readline()
+            data_decoded = data.decode()
+            print(data_decoded)
             if history:
                 async with aiofiles.open('data.txt', 'a', encoding='utf-8') as file:
                     await file.write(f'[{datetime.now().strftime("%d.%m.%y %H:%M")}] {data_decoded}')
