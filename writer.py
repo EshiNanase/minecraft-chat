@@ -1,38 +1,57 @@
 import asyncio
 import argparse
-import json
+import logging
+import aiofiles
 
 
-async def dialogue(reader, writer):
+async def write_down_account_info(account_info):
+    async with aiofiles.open('account.txt', 'w', encoding='utf-8') as file:
+        await file.write(account_info)
+
+
+async def dialogue(reader, writer, debug):
 
     while True:
-        message = input('Ваше сообщение: ')
+        message = input('Ваше сообщение: ').replace('\n', '')
         writer.write(f'{message}\n\n'.encode())
         await writer.drain()
-        await reader.readline()
+        response = await reader.readline()
+        if debug:
+            logging.debug(response.decode())
 
 
-async def login(reader, writer, hash):
+async def login(reader, writer, hash, debug):
 
-    await reader.readline()
+    writer.write(f'{hash}\n'.encode())
+    await writer.drain()
+    response = await reader.readline()
 
-    if hash:
+    if debug:
+        logging.debug(response.decode())
 
-        writer.write(f'{hash}\n'.encode())
-        await writer.drain()
-        await reader.readline()
+    if 'null' in response.decode():
+        writer.close()
+        await writer.wait_closed()
+        raise RuntimeError('Неверный хеш!')
 
-    else:
 
-        writer.write('\n'.encode())
-        await writer.drain()
-        await reader.readline()
-        username = input('Введите ник: ')
-        writer.write(f'{username}\n\n'.encode())
-        await writer.drain()
-        response_with_hash = await reader.readline()
-        hash = json.loads(response_with_hash.decode())['account_hash']
-        print(f'Ваш хеш: {hash}')
+async def register(reader, writer, debug):
+
+    writer.write('\n'.encode())
+    await writer.drain()
+    response = await reader.readline()
+    if debug:
+        logging.debug(response.decode())
+
+    username = input('Введите ник: ').replace('\n', '')
+    writer.write(f'{username}\n\n'.encode())
+    await writer.drain()
+
+    response = await reader.readline()
+    if debug:
+        logging.debug(response.decode())
+    await write_down_account_info(response.decode())
+    print(f'Ваша информация об аккаунте была записана в account.txt!')
 
 
 async def main(args):
@@ -40,11 +59,20 @@ async def main(args):
     host = args.host
     port = args.port
     hash = args.hash
+    debug = args.debug
+
+    if debug:
+        logging.basicConfig(level=logging.DEBUG)
 
     reader, writer = await asyncio.open_connection(host=host, port=port)
+    await reader.readline()
 
-    await login(reader, writer, hash)
-    await dialogue(reader, writer)
+    if hash:
+        await login(reader, writer, hash, debug)
+    else:
+        await register(reader, writer, debug)
+
+    await dialogue(reader, writer, debug)
 
 if __name__ == '__main__':
 
@@ -52,6 +80,7 @@ if __name__ == '__main__':
     parser.add_argument('--host', help='указать хост')
     parser.add_argument('--port', type=int, help='указать порт')
     parser.add_argument('--hash', help='указать хеш')
+    parser.add_argument('--debug', action='store_true', help='указать включен/выключен дебаг сообщений в консоль')
     args = parser.parse_args()
 
     asyncio.run(main(args))
