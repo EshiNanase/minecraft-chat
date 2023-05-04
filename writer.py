@@ -21,10 +21,17 @@ async def open_socket(host, port):
 
 
 async def authorize(reader, writer, hash):
+    
+    await reader.readline()
+
     if hash:
         await login(reader, writer, hash)
     else:
         await register(reader, writer)
+
+    writer.write(f'\n'.encode())
+    await writer.drain()
+    await reader.readline()
 
 
 async def connect_endlessly(open_socket_function, authorize_function):
@@ -36,7 +43,6 @@ async def connect_endlessly(open_socket_function, authorize_function):
         try:
             async with open_socket_function() as streamers:
                 reader, writer = streamers
-                await reader.readline()
                 if not authorized:
                     authorized = True
                     await authorize_function(reader, writer)
@@ -59,9 +65,9 @@ async def write_down_account_info(account_info):
 
 async def write_in_chat(reader, writer):
 
-    message = input('Ваше сообщение: ').replace('\n', '')
+    message = input('Ваше сообщение: ').replace(r'\n', '')
     print(message)
-    writer.write(f'{message}\n'.encode())
+    writer.write(f'{message}\n\n'.encode())
     await writer.drain()
     response = await reader.readline()
     logging.debug(response.decode())

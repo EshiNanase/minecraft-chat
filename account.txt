@@ -1,1 +1,1 @@
-{"nickname": "Confident привет", "account_hash": "7e78a41c-ea91-11ed-ad76-0242ac110002"}
+{"nickname": "Hopeful sasha", "account_hash": "4d7a4590-ea92-11ed-ad76-0242ac110002"}
