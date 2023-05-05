@@ -3,21 +3,11 @@ import time
 import aiofiles
 from datetime import datetime
 import argparse
-from contextlib import asynccontextmanager
+from context_manager import open_socket
 from requests import ConnectionError
 from functools import partial
 
 MAX_RECONNECT_ATTEMPTS = 3
-
-
-@asynccontextmanager
-async def open_socket(host, port):
-    writer = None
-    try:
-        reader, writer = await asyncio.open_connection(host, port)
-        yield reader
-    finally:
-        writer.close() if writer else None
 
 
 async def log(text, history):
@@ -32,7 +22,8 @@ async def connect_endlessly(open_socket_function, log_function):
     while True:
 
         try:
-            async with open_socket_function() as reader:
+            async with open_socket_function() as streamers:
+                reader = streamers[0]
                 await read_chat(reader, log_function)
 
         except ConnectionError:

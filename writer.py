@@ -2,7 +2,7 @@ import asyncio
 import argparse
 import logging
 import aiofiles
-from contextlib import asynccontextmanager
+from context_manager import open_socket
 from functools import partial
 from requests import ConnectionError
 import time
@@ -10,18 +10,8 @@ import time
 MAX_RECONNECT_ATTEMPTS = 3
 
 
-@asynccontextmanager
-async def open_socket(host, port):
-    writer = None
-    try:
-        reader, writer = await asyncio.open_connection(host, port)
-        yield (reader, writer)
-    finally:
-        writer.close() if writer else None
-
-
 async def authorize(reader, writer, hash):
-    
+
     await reader.readline()
 
     if hash:
@@ -33,20 +23,20 @@ async def authorize(reader, writer, hash):
     await writer.drain()
     await reader.readline()
 
+    return True
+
 
 async def connect_endlessly(open_socket_function, authorize_function):
     attempts = 0
-    authorized = False
 
     while True:
 
         try:
             async with open_socket_function() as streamers:
                 reader, writer = streamers
-                if not authorized:
-                    authorized = True
-                    await authorize_function(reader, writer)
-                await write_in_chat(reader, writer)
+
+                if await authorize_function(reader, writer):
+                    await write_in_chat(reader, writer)
 
         except ConnectionError:
             print('Соединение нарушено!')
@@ -65,12 +55,13 @@ async def write_down_account_info(account_info):
 
 async def write_in_chat(reader, writer):
 
-    message = input('Ваше сообщение: ').replace(r'\n', '')
-    print(message)
-    writer.write(f'{message}\n\n'.encode())
-    await writer.drain()
-    response = await reader.readline()
-    logging.debug(response.decode())
+    while True:
+
+        message = input('Ваше сообщение: ').replace(r'\n', '')
+        writer.write(f'{message}\n\n'.encode())
+        await writer.drain()
+        response = await reader.readline()
+        logging.debug(response.decode())
 
 
 async def login(reader, writer, hash):
