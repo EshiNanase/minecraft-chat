@@ -11,4 +11,3 @@ async def open_socket(host, port):
     finally:
         writer.close() if writer else None
         await writer.wait_closed() if writer else None
-
